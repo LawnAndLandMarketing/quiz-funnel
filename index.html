@@ -1084,7 +1084,21 @@
       document.querySelectorAll('.quiz-step').forEach(s => s.classList.remove('active'));
       document.getElementById('progress-wrap').style.display = 'none';
 
-      // Show capture screen
+      // Not-a-fit paths skip the capture form entirely — go straight to loading
+      const isNotAFit = pendingResult === 'notfit-early' || pendingResult === 'notfit-industry';
+      if (isNotAFit) {
+        const loadingEl = document.getElementById('loading-screen');
+        loadingEl.style.display = 'flex';
+        loadingEl.classList.add('active');
+        setTimeout(() => {
+          loadingEl.style.display = 'none';
+          loadingEl.classList.remove('active');
+          showResultCard(pendingResult);
+        }, 2400);
+        return;
+      }
+
+      // Qualified leads (Authority, Growth, Seed) → capture form
       const captureEl = document.getElementById('capture-step');
       captureEl.classList.add('active');
       const card = captureEl.querySelector('.capture-card');
