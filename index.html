@@ -439,7 +439,7 @@
       .trust-strip { gap: 16px; }
     }
   </style>
-<!-- cache-bust: sprint3-v2-prefill-fix -->
+<!-- cache-bust: remove-breather -->
 </head>
 <body>
   <div class="grain-overlay" aria-hidden="true"></div>
@@ -1207,38 +1207,10 @@
 
     function goNext(stepNum) {
       if (!answers[stepNum]) return;
-      // Sprint 3: insert breather slide between Q4 and Q5
-      if (stepNum === 4) {
-        showBreather();
-        return;
-      }
       showStep(stepNum + 1);
     }
 
-    function showBreather() {
-      document.querySelectorAll('.quiz-step').forEach(s => {
-        s.classList.remove('active');
-        const card = s.querySelector('.quiz-card');
-        if (card) card.classList.remove('fade-in');
-      });
-      const breather = document.getElementById('step-breather');
-      breather.classList.add('active');
-      const card = breather.querySelector('.quiz-card');
-      if (card) { void card.offsetWidth; card.classList.add('fade-in'); }
-      trackStepView('breather');
-      breather.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function advanceFromBreather() {
-      showStep(5);
-    }
-
     function goBack() {
-      // If we're on Q5 and breather was shown, go back to breather first
-      if (currentStep === 5) {
-        showBreather();
-        return;
-      }
       if (currentStep > 1) {
         showStep(currentStep - 1);
       } else {
