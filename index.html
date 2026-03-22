@@ -439,7 +439,7 @@
       .trust-strip { gap: 16px; }
     }
   </style>
-<!-- cache-bust: sprint3-v1 -->
+<!-- cache-bust: sprint3-v2-prefill-fix -->
 </head>
 <body>
   <div class="grain-overlay" aria-hidden="true"></div>
@@ -1488,11 +1488,11 @@
       e.preventDefault();
       const base = 'https://api.leadconnectorhq.com/widget/form/mn17wtd9UDgkSArUmeoh';
       const params = new URLSearchParams();
-      if (leadData.firstName)  params.set('first_name',    leadData.firstName);
-      if (leadData.lastName)   params.set('last_name',     leadData.lastName);
-      if (leadData.email)      params.set('email',         leadData.email);
-      if (leadData.phone)      params.set('phone',         leadData.phone);
-      if (leadData.company)    params.set('companyName',   leadData.company);
+      if (leadData.firstName)  params.set('first_name',   leadData.firstName);
+      if (leadData.lastName)   params.set('last_name',    leadData.lastName);
+      if (leadData.email)      params.set('email',        leadData.email);
+      if (leadData.phone)      params.set('phone',        leadData.phone);
+      if (leadData.company)    params.set('organization', leadData.company);
       const url = params.toString() ? base + '?' + params.toString() : base;
       window.open(url, '_blank');
     }
