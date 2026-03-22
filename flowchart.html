@@ -298,6 +298,104 @@
       margin-top: 4px;
     }
 
+    /* ══════════════════════════════════════════ */
+    /* BLOCKER SYSTEM                             */
+    /* ══════════════════════════════════════════ */
+
+    /* Top blocker banner */
+    .blocker-banner {
+      width: 100%; max-width: 960px; margin: 0 auto 40px;
+      background: rgba(239,68,68,0.08);
+      border: 2px solid rgba(239,68,68,0.50);
+      border-radius: 14px; padding: 24px 28px;
+    }
+    .blocker-banner-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+    }
+    .blocker-banner-icon {
+      font-size: 1.4rem; animation: pulse-icon 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse-icon {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.7; }
+    }
+    .blocker-banner-title {
+      font-family: 'Rethink Sans', sans-serif;
+      font-weight: 800; font-style: italic;
+      font-size: 1.1rem; color: #f87171;
+    }
+    .blocker-banner-sub {
+      font-size: 0.78rem; color: rgba(255,255,255,0.40); margin-top: 2px;
+    }
+    .blocker-list { display: flex; flex-direction: column; gap: 10px; }
+    .blocker-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 8px; padding: 12px 16px;
+    }
+    .blocker-item-badge {
+      flex-shrink: 0; background: rgba(239,68,68,0.20);
+      border: 1px solid rgba(239,68,68,0.40);
+      border-radius: 999px; padding: 2px 10px;
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.10em;
+      text-transform: uppercase; color: #f87171; white-space: nowrap;
+    }
+    .blocker-item-text {
+      font-size: 0.85rem; color: rgba(255,255,255,0.80); line-height: 1.5;
+    }
+    .blocker-item-text strong { color: #fff; }
+    .blocker-item-text .action {
+      display: inline-block; margin-top: 4px;
+      font-size: 0.75rem; color: rgba(239,68,68,0.80); font-style: italic;
+    }
+
+    /* Inline blocker badge (on nodes) */
+    .blocker-inline {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.45);
+      border-radius: 7px; padding: 7px 12px;
+      margin-top: 8px;
+    }
+    .blocker-inline-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+      animation: pulse-dot-red 1.4s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse-dot-red {
+      0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 6px #ef4444; }
+      50% { opacity: 0.5; transform: scale(0.7); box-shadow: 0 0 2px #ef4444; }
+    }
+    .blocker-inline-text {
+      font-size: 0.72rem; font-weight: 700; color: #f87171; line-height: 1.4;
+    }
+
+    /* Incomplete items (yellow warning — partially done) */
+    .warning-inline {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(234,179,8,0.08);
+      border: 1px solid rgba(234,179,8,0.35);
+      border-radius: 7px; padding: 7px 12px;
+      margin-top: 8px;
+    }
+    .warning-inline-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #eab308;
+      box-shadow: 0 0 8px #eab308;
+      animation: pulse-dot-yellow 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse-dot-yellow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+    .warning-inline-text {
+      font-size: 0.72rem; font-weight: 600; color: #fbbf24; line-height: 1.4;
+    }
+
     .conn-yes { background: rgba(172,231,29,0.25); }
     .conn-no  { background: rgba(239,68,68,0.25); }
     .conn-yes-arrow { border-top-color: rgba(172,231,29,0.40); }
@@ -325,6 +423,78 @@
       <div class="legend-item"><div class="legend-dot" style="background:rgba(59,130,246,0.5);"></div> Lead Capture (Sprint 1)</div>
       <div class="legend-item"><div class="legend-dot" style="background:rgba(139,92,246,0.5);"></div> SAE / N8N (Sprint 1)</div>
       <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,0.4);"></div> Not a Fit Exit</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 🚨 BLOCKER BANNER                                       -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="blocker-banner">
+      <div class="blocker-banner-header">
+        <div class="blocker-banner-icon">🚨</div>
+        <div>
+          <div class="blocker-banner-title">Open Blockers — Action Required</div>
+          <div class="blocker-banner-sub">These items are incomplete. The funnel is live but not fully operational until they're resolved.</div>
+        </div>
+      </div>
+      <div class="blocker-list">
+
+        <div class="blocker-item">
+          <div class="blocker-item-badge">🔴 Sprint 1</div>
+          <div class="blocker-item-text">
+            <strong>N8N Webhook URL not set</strong> — The lead capture form fires but no data is going anywhere. Every quiz submission is currently lost.<br>
+            <span class="action">→ Create N8N workflow → copy webhook URL → paste into <code style="background:rgba(255,255,255,0.08); padding:1px 6px; border-radius:4px;">N8N_WEBHOOK_URL</code> in index.html → redeploy</span>
+          </div>
+        </div>
+
+        <div class="blocker-item">
+          <div class="blocker-item-badge">🔴 Sprint 1</div>
+          <div class="blocker-item-text">
+            <strong>N8N → SAE workflow not built</strong> — Even once the webhook URL is set, there's no workflow yet to create contacts in Service Area Expert, tag by program result, or trigger follow-up sequences.<br>
+            <span class="action">→ Build N8N workflow: receive payload → create/update SAE contact → tag (Authority/Growth/Seed) → trigger follow-up sequence per program</span>
+          </div>
+        </div>
+
+        <div class="blocker-item">
+          <div class="blocker-item-badge">🟡 Live URLs</div>
+          <div class="blocker-item-text">
+            <strong>CTA links use placeholder URLs</strong> — Apply, Book a Call, Seed Waitlist, and Free Resources buttons all point to lawnandlandmarketing.com placeholders.<br>
+            <span class="action">→ Confirm real destination URLs for each CTA and update index.html</span>
+          </div>
+        </div>
+
+        <div class="blocker-item">
+          <div class="blocker-item-badge">🟡 Content</div>
+          <div class="blocker-item-text">
+            <strong>Loading screen testimonial is placeholder</strong> — Currently using a generic quote. Replace with a real client testimonial (name, company, specific result).<br>
+            <span class="action">→ Pick best client quote → update loading screen copy in index.html</span>
+          </div>
+        </div>
+
+        <div class="blocker-item">
+          <div class="blocker-item-badge">⏳ Sprint 3</div>
+          <div class="blocker-item-text">
+            <strong>Drop-off tracking not instrumented</strong> — No analytics on which question people abandon. Can't optimize what you can't measure.<br>
+            <span class="action">→ Add per-question event tracking (Google Analytics / Meta Pixel)</span>
+          </div>
+        </div>
+
+        <div class="blocker-item">
+          <div class="blocker-item-badge">⏳ Sprint 3</div>
+          <div class="blocker-item-text">
+            <strong>No urgency/scarcity before loading screen</strong> — Per quiz funnel best practice: add a micro-commitment or scarcity element after Q8 before the form.<br>
+            <span class="action">→ Sprint 3 build</span>
+          </div>
+        </div>
+
+        <div class="blocker-item">
+          <div class="blocker-item-badge">⏳ Sprint 4</div>
+          <div class="blocker-item-text">
+            <strong>Meta retargeting audiences not built</strong> — Quiz non-buyer data sitting in SAE is not yet flowing into Meta Custom Audiences segmented by struggle/goal.<br>
+            <span class="action">→ Sprint 4 build (depends on Sprint 1 N8N + SAE tagging being live first)</span>
+          </div>
+        </div>
+
+      </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════ -->
@@ -511,7 +681,10 @@
           <div class="node-sub">First · Last · Email · Phone · Company<br>
             <strong style="color:#60a5fa;">Authority / Growth / Seed only</strong> — Not a Fit paths skip this entirely
           </div>
-          <div class="sprint-badge">Sprint 1 · Needs N8N webhook URL</div>
+          <div class="blocker-inline">
+            <div class="blocker-inline-dot"></div>
+            <div class="blocker-inline-text">BLOCKED: N8N_WEBHOOK_URL not set — form submits but data goes nowhere</div>
+          </div>
         </div>
       </div>
 
@@ -614,8 +787,12 @@
       </div>
 
       <!-- N8N note -->
-      <div style="margin-top:36px; max-width:620px; background:rgba(139,92,246,0.06); border:1px solid rgba(139,92,246,0.20); border-radius:10px; padding:16px 20px; text-align:center;">
-        <div style="font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#a78bfa; margin-bottom:8px;">Sprint 1 — N8N Webhook Payload</div>
+      <div style="margin-top:36px; max-width:620px; background:rgba(239,68,68,0.07); border:2px solid rgba(239,68,68,0.40); border-radius:10px; padding:16px 20px; text-align:center;">
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px;">
+          <div class="blocker-inline-dot"></div>
+          <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:#f87171;">BLOCKED — N8N workflow + SAE integration not built yet</div>
+        </div>
+        <div style="font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#a78bfa; margin-bottom:8px;">Sprint 1 — When Built, Webhook Will Send:</div>
         <div style="font-size:0.78rem; color:rgba(255,255,255,0.50); line-height:1.8;">
           Name · Email · Phone · Company · <strong style="color:rgba(255,255,255,0.75);">Result</strong> · All 8 answers (label + score) · Revenue tier · Crew count · Investment tier · Goal · Struggle · Ads experience · Source · Timestamp · Page URL
         </div>
@@ -626,25 +803,32 @@
       <div style="margin-top:32px; max-width:720px; width:100%;">
         <div style="font-size:0.62rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:rgba(255,255,255,0.18); text-align:center; margin-bottom:16px;">Sprint Roadmap</div>
         <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
-          <div style="background:rgba(172,231,29,0.08); border:1px solid rgba(172,231,29,0.25); border-radius:8px; padding:12px 16px; min-width:160px; text-align:center;">
-            <div style="font-size:0.62rem; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:var(--ll-lime); margin-bottom:4px;">✅ Sprint 1</div>
-            <div style="font-size:0.78rem; color:rgba(255,255,255,0.70);">Lead Capture + Webhook</div>
-            <div style="font-size:0.68rem; color:rgba(255,255,255,0.30); margin-top:3px;">Needs N8N URL</div>
+          <!-- Sprint 1: partially done, blocked -->
+          <div style="background:rgba(239,68,68,0.07); border:2px solid rgba(239,68,68,0.45); border-radius:8px; padding:12px 16px; min-width:180px; text-align:center;">
+            <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:6px;">
+              <div class="blocker-inline-dot"></div>
+              <div style="font-size:0.62rem; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:#f87171;">Sprint 1 — Blocked</div>
+            </div>
+            <div style="font-size:0.78rem; color:#fff; font-weight:600;">Lead Capture + Webhook</div>
+            <div style="font-size:0.68rem; color:#f87171; margin-top:5px; line-height:1.4;">Form built ✅<br>N8N URL missing 🔴<br>SAE workflow not built 🔴</div>
           </div>
+          <!-- Sprint 2: done -->
           <div style="background:rgba(172,231,29,0.08); border:1px solid rgba(172,231,29,0.25); border-radius:8px; padding:12px 16px; min-width:160px; text-align:center;">
-            <div style="font-size:0.62rem; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:var(--ll-lime); margin-bottom:4px;">✅ Sprint 2</div>
+            <div style="font-size:0.62rem; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:var(--ll-lime); margin-bottom:4px;">✅ Sprint 2 — Live</div>
             <div style="font-size:0.78rem; color:rgba(255,255,255,0.70);">Revenue-First Routing</div>
-            <div style="font-size:0.68rem; color:rgba(255,255,255,0.30); margin-top:3px;">Live</div>
+            <div style="font-size:0.68rem; color:rgba(172,231,29,0.50); margin-top:3px;">All 5 edge cases wired</div>
           </div>
-          <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px 16px; min-width:160px; text-align:center;">
-            <div style="font-size:0.62rem; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:rgba(255,255,255,0.30); margin-bottom:4px;">⏳ Sprint 3</div>
-            <div style="font-size:0.78rem; color:rgba(255,255,255,0.40);">Conversion Optimization</div>
-            <div style="font-size:0.68rem; color:rgba(255,255,255,0.20); margin-top:3px;">Drop-off tracking, breather slide, urgency</div>
+          <!-- Sprint 3: pending -->
+          <div style="background:rgba(234,179,8,0.05); border:1px solid rgba(234,179,8,0.20); border-radius:8px; padding:12px 16px; min-width:180px; text-align:center;">
+            <div style="font-size:0.62rem; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:#fbbf24; margin-bottom:4px;">⏳ Sprint 3 — Not Started</div>
+            <div style="font-size:0.78rem; color:rgba(255,255,255,0.50);">Conversion Optimization</div>
+            <div style="font-size:0.68rem; color:rgba(255,255,255,0.25); margin-top:3px; line-height:1.4;">Drop-off tracking<br>Breather slide after Q4<br>Urgency before form</div>
           </div>
-          <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px 16px; min-width:160px; text-align:center;">
-            <div style="font-size:0.62rem; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:rgba(255,255,255,0.30); margin-bottom:4px;">⏳ Sprint 4</div>
-            <div style="font-size:0.78rem; color:rgba(255,255,255,0.40);">Meta Retargeting</div>
-            <div style="font-size:0.68rem; color:rgba(255,255,255,0.20); margin-top:3px;">Custom audiences from SAE tags</div>
+          <!-- Sprint 4: pending, depends on S1 -->
+          <div style="background:rgba(234,179,8,0.05); border:1px solid rgba(234,179,8,0.20); border-radius:8px; padding:12px 16px; min-width:180px; text-align:center;">
+            <div style="font-size:0.62rem; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:#fbbf24; margin-bottom:4px;">⏳ Sprint 4 — Not Started</div>
+            <div style="font-size:0.78rem; color:rgba(255,255,255,0.50);">Meta Retargeting</div>
+            <div style="font-size:0.68rem; color:rgba(255,255,255,0.25); margin-top:5px; line-height:1.4;">Custom audiences from SAE tags<br><em style="color:rgba(239,68,68,0.50);">Requires Sprint 1 first</em></div>
           </div>
         </div>
       </div>
