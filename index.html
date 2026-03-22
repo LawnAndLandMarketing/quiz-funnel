@@ -439,7 +439,7 @@
       .trust-strip { gap: 16px; }
     }
   </style>
-<!-- cache-bust: 1774144826 -->
+<!-- cache-bust: sprint3-v1 -->
 </head>
 <body>
   <div class="grain-overlay" aria-hidden="true"></div>
@@ -594,6 +594,36 @@
       </div>
     </div>
 
+    <!-- BREATHER SLIDE (Sprint 3 — after Q4, before Q5) -->
+    <div class="quiz-step" id="step-breather">
+      <div class="quiz-card fade-in" style="text-align:center; padding:48px 48px 44px;">
+        <div class="question-eyebrow" style="margin:0 auto 24px;"><span>📊</span> Real Talk</div>
+        <h2 style="font-family:'Rethink Sans',sans-serif; font-weight:800; font-style:italic; font-size:clamp(1.4rem,3vw,2rem); line-height:1.15; margin-bottom:16px; color:#fff;">
+          You're Halfway There.<br><span style="color:var(--ll-lime)">Here's What We See Every Day.</span>
+        </h2>
+        <p style="font-size:0.95rem; color:rgba(255,255,255,0.60); max-width:460px; margin:0 auto 36px; line-height:1.7;">
+          Operators like you have already built something real — word of mouth, reputation, hustle. The ceiling they hit isn't talent. It's visibility. That's exactly what we fix.
+        </p>
+        <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:36px;">
+          <div style="background:rgba(172,231,29,0.07); border:1px solid rgba(172,231,29,0.20); border-radius:12px; padding:20px 22px; min-width:130px; flex:1; max-width:180px;">
+            <div style="font-family:'Rethink Sans',sans-serif; font-weight:800; font-style:italic; font-size:1.9rem; color:var(--ll-lime); margin-bottom:6px;">$3M+</div>
+            <div style="font-size:0.78rem; color:rgba(255,255,255,0.45); line-height:1.4;">annual ad spend managed for green industry clients</div>
+          </div>
+          <div style="background:rgba(172,231,29,0.07); border:1px solid rgba(172,231,29,0.20); border-radius:12px; padding:20px 22px; min-width:130px; flex:1; max-width:180px;">
+            <div style="font-family:'Rethink Sans',sans-serif; font-weight:800; font-style:italic; font-size:1.9rem; color:var(--ll-lime); margin-bottom:6px;">97%</div>
+            <div style="font-size:0.78rem; color:rgba(255,255,255,0.45); line-height:1.4;">client retention — because the system actually works</div>
+          </div>
+          <div style="background:rgba(172,231,29,0.07); border:1px solid rgba(172,231,29,0.20); border-radius:12px; padding:20px 22px; min-width:130px; flex:1; max-width:180px;">
+            <div style="font-family:'Rethink Sans',sans-serif; font-weight:800; font-style:italic; font-size:1.9rem; color:var(--ll-lime); margin-bottom:6px;">100%</div>
+            <div style="font-size:0.78rem; color:rgba(255,255,255,0.45); line-height:1.4;">green industry focus — it's all we know, and why it works</div>
+          </div>
+        </div>
+        <button class="btn-next" style="margin:0 auto; font-size:1rem; padding:14px 36px;" onclick="advanceFromBreather()">
+          Keep Going <span class="arrow">→</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Q5: WEBSITE -->
     <div class="quiz-step" id="step-5">
       <div class="quiz-card fade-in">
@@ -725,6 +755,13 @@
     <!-- EMAIL CAPTURE (Sprint 1) -->
     <div id="capture-step">
       <div class="capture-card fade-in">
+        <!-- Urgency strip (Sprint 3) -->
+        <div id="urgency-strip" style="display:flex; align-items:center; gap:12px; background:rgba(172,231,29,0.07); border:1px solid rgba(172,231,29,0.18); border-radius:10px; padding:12px 16px; margin-bottom:24px;">
+          <div style="flex-shrink:0; font-size:1.1rem;">🌿</div>
+          <div style="font-size:0.82rem; color:rgba(255,255,255,0.75); line-height:1.4;">
+            <span id="urgency-text">Landscape companies applied this week</span> — applications reviewed in the order received.
+          </div>
+        </div>
         <div class="capture-eyebrow">🎯 Almost There</div>
         <div class="capture-heading">Where should we send<br>your growth plan?</div>
         <div class="capture-sub">Your results are ready. Drop your info below and we'll show you exactly which program fits — and what it looks like for your business.</div>
@@ -1012,6 +1049,76 @@
     // Set your N8N webhook URL here. Receives all quiz data + lead info.
     const N8N_WEBHOOK_URL = 'https://lawnandlandmarketing.app.n8n.cloud/webhook/ll-quiz-lead-capture';
 
+    // ─── SPRINT 3: DROP-OFF TRACKING ──────────────────────────────────────────
+    const SESSION_ID = 'qs_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now();
+    let quizStartedAt = null;
+    let lastStepAt = null;
+    const stepTimings = {};
+
+    function trackEvent(event, data) {
+      const payload = {
+        event,
+        session: SESSION_ID,
+        timestamp: new Date().toISOString(),
+        source: 'll-quiz-funnel',
+        ...data
+      };
+      // Send to N8N (non-blocking, best-effort)
+      if (N8N_WEBHOOK_URL) {
+        const trackUrl = N8N_WEBHOOK_URL.replace('/ll-quiz-lead-capture', '/ll-quiz-tracking');
+        try {
+          navigator.sendBeacon(trackUrl, JSON.stringify(payload));
+        } catch (_) {
+          fetch(trackUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), keepalive: true }).catch(() => {});
+        }
+      }
+    }
+
+    function trackStepView(stepNum) {
+      const now = Date.now();
+      const timeOnPrev = lastStepAt ? Math.round((now - lastStepAt) / 1000) : null;
+      stepTimings[stepNum] = now;
+      lastStepAt = now;
+      trackEvent('step_view', {
+        step: stepNum,
+        step_name: getStepName(stepNum),
+        time_on_prev_step_sec: timeOnPrev,
+      });
+    }
+
+    function getStepName(n) {
+      const names = { 0: 'intro', 1: 'industry_gate', 2: 'crews', 3: 'revenue', 4: 'goal', 'breather': 'breather_slide', 5: 'website', 6: 'ads', 7: 'struggle', 8: 'investment', 'capture': 'lead_capture', 'loading': 'loading', 'result': 'result' };
+      return names[n] || 'step_' + n;
+    }
+
+    // Track exit/abandonment
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && currentStep > 0) {
+        trackEvent('quiz_abandoned', {
+          last_step: currentStep,
+          last_step_name: getStepName(currentStep),
+          answers_count: Object.keys(answers).length,
+          time_since_start_sec: quizStartedAt ? Math.round((Date.now() - quizStartedAt) / 1000) : null,
+        });
+      }
+    });
+
+    // ─── SPRINT 3: URGENCY STRIP ───────────────────────────────────────────────
+    function setUrgencyText() {
+      // Pseudo-dynamic: based on day-of-week + hour to feel live without a DB
+      const now = new Date();
+      const day = now.getDay(); // 0=Sun, 6=Sat
+      const hour = now.getHours();
+      // Slightly higher on weekday business hours
+      const isBusinessHours = day >= 1 && day <= 5 && hour >= 8 && hour <= 18;
+      const base = isBusinessHours ? [11, 12, 14, 13, 15, 12, 11] : [6, 7, 8, 7, 9, 7, 6];
+      // Use date as seed for consistency within a day
+      const seed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+      const n = base[day] + (seed % 5);
+      const el = document.getElementById('urgency-text');
+      if (el) el.textContent = n + ' landscape companies applied this week';
+    }
+
     // ─── STATE ─────────────────────────────────────────────────────────────────
     const totalQuestions = 8;
     let currentStep = 0;
@@ -1021,6 +1128,8 @@
     let leadData = {};        // captured from form
 
     function startQuiz() {
+      quizStartedAt = Date.now();
+      trackEvent('quiz_started', { referrer: document.referrer });
       showStep(1);
       document.getElementById('progress-wrap').style.display = 'block';
     }
@@ -1050,6 +1159,7 @@
         currentStep = n;
         updateProgress(n);
         document.getElementById('progress-wrap').style.display = 'block';
+        trackStepView(n);
 
         // Restore selection if navigating back
         if (answers[n]) {
@@ -1097,10 +1207,38 @@
 
     function goNext(stepNum) {
       if (!answers[stepNum]) return;
+      // Sprint 3: insert breather slide between Q4 and Q5
+      if (stepNum === 4) {
+        showBreather();
+        return;
+      }
       showStep(stepNum + 1);
     }
 
+    function showBreather() {
+      document.querySelectorAll('.quiz-step').forEach(s => {
+        s.classList.remove('active');
+        const card = s.querySelector('.quiz-card');
+        if (card) card.classList.remove('fade-in');
+      });
+      const breather = document.getElementById('step-breather');
+      breather.classList.add('active');
+      const card = breather.querySelector('.quiz-card');
+      if (card) { void card.offsetWidth; card.classList.add('fade-in'); }
+      trackStepView('breather');
+      breather.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function advanceFromBreather() {
+      showStep(5);
+    }
+
     function goBack() {
+      // If we're on Q5 and breather was shown, go back to breather first
+      if (currentStep === 5) {
+        showBreather();
+        return;
+      }
       if (currentStep > 1) {
         showStep(currentStep - 1);
       } else {
@@ -1149,6 +1287,8 @@
       }
 
       // Qualified leads (Authority, Growth, Seed) → capture form
+      setUrgencyText();
+      trackEvent('capture_form_shown', { pending_result: pendingResult });
       const captureEl = document.getElementById('capture-step');
       captureEl.classList.add('active');
       const card = captureEl.querySelector('.capture-card');
@@ -1185,6 +1325,8 @@
 
       // Store lead data
       leadData = { firstName: first, lastName: last, email, phone, company };
+
+      trackEvent('lead_captured', { result: pendingResult, company: company });
 
       // Disable button + show loading state
       const btn = document.getElementById('submit-btn');
@@ -1281,6 +1423,7 @@
         void card.offsetWidth;
         card.classList.add('fade-in');
       }
+      trackEvent('result_shown', { result: resultId });
       resultScreen.scrollIntoView({ behavior: 'smooth' });
     }
 
