@@ -315,10 +315,10 @@
         <div class="includes-section">
           <div class="includes-label">What's included</div>
           <ul class="includes-list">
-            <li class="includes-item"><div class="includes-icon">✓</div>AI-built professional website — live fast, looks legit, built for local lead gen</li>
+            <li class="includes-item"><div class="includes-icon">✓</div>A professional website built for local lead gen in your market — live within days</li>
             <li class="includes-item"><div class="includes-icon">✓</div>Website hosting, maintenance, and updates included</li>
             <li class="includes-item"><div class="includes-icon">✓</div>Service Area Expert CRM — manage leads, follow-ups, and jobs</li>
-            <li class="includes-item"><div class="includes-icon">✓</div>Automated GBP posting — AI-generated content, consistently scheduled</li>
+            <li class="includes-item"><div class="includes-icon">✓</div>Consistent Google Business Profile content — scheduled and handled for you</li>
             <li class="includes-item"><div class="includes-icon">✓</div>LSA setup guidance + review request sequences pre-built</li>
             <li class="includes-item"><div class="includes-icon">✓</div>Self-serve knowledge base + community — support when you need it</li>
             <li class="includes-item"><div class="includes-icon">✓</div>Clear graduation path to Growth at $250K revenue</li>
@@ -337,7 +337,7 @@
           <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;"><div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div><div style="font-size:0.65rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--ll-lime); white-space:nowrap; padding:4px 12px; background:rgba(172,231,29,0.08); border:1px solid rgba(172,231,29,0.22); border-radius:999px;">The Next Step</div><div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div></div>
           <p style="font-size:0.95rem; color:rgba(255,255,255,0.70); line-height:1.6;">We run a waitlist for the Seed Program to make sure every new client gets the onboarding experience they deserve — not a rushed rollout. Join now and we'll send you the full program details and next steps so that when it's your turn, you can hit the ground running from day one.</p>
         </div>
-        <a target="_blank" rel="noopener noreferrer" href="https://lawnandlandmarketing.com/seed-waitlist" class="result-cta-primary">Join the Seed Waitlist →</a>
+        <a target="_blank" rel="noopener noreferrer" href="#" onclick="openSeedWaitlist(event)" class="result-cta-primary">Join the Seed Waitlist →</a>
         <a target="_blank" rel="noopener noreferrer" href="https://lawnandlandmarketing.com/grow" class="result-cta-secondary">Talk to Someone First</a>
         <div class="trust-strip">
           <div class="trust-item">🌴 Green Industry Experts</div>
@@ -443,6 +443,12 @@
   </div>
 
   <script>
+    function openSeedWaitlist(e) {
+      e.preventDefault();
+      const base = 'https://api.leadconnectorhq.com/widget/form/mn17wtd9UDgkSArUmeoh';
+      window.open(base, '_blank');
+    }
+
     function showTab(id) {
       document.querySelectorAll('.result-section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
