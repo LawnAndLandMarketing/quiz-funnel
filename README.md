@@ -2,10 +2,11 @@
 
 **Live Quiz:** https://ll-quiz-funnel.vercel.app
 **Preview All Results:** https://ll-quiz-preview.vercel.app
-**Flow Diagram:** https://ll-quiz-flowchart.vercel.app
+**Flow Diagram:** https://ll-quiz-flowchart.vercel.app/flowchart.html
+**Analytics Dashboard:** https://ll-quiz-analytics.vercel.app
 **Vercel Project:** `ll-quiz-funnel` (`prj_lTgU2rBSu8KIhyBWF8pNOoX9bM85`)
 **Stack:** Pure HTML/CSS/JS — zero dependencies, zero build step
-**Version:** v3 — Full Sprint 1 complete (March 21, 2026)
+**Version:** v4 — GA4 tracking + analytics dashboard (March 24, 2026)
 
 ---
 
@@ -13,10 +14,73 @@
 
 | File | Purpose |
 |------|---------|
-| `index.html` | The live quiz — 8 questions, lead capture, result routing |
-| `preview.html` | Internal review page — all 5 result pages with tab navigation |
+| `index.html` | The live quiz — 8 questions, lead capture, result routing, GA4 + Meta Pixel tracking |
+| `preview.html` | Internal review page — all 6 result pages with tab navigation |
 | `flowchart.html` | Visual logic map — routing, blockers, sprint status |
 | `ll-quiz-flowchart.drawio` | Editable diagram — import to diagrams.net, Miro, or FigJam |
+
+---
+
+## Analytics & Tracking
+
+### GA4 Setup
+
+| Property | Measurement ID | Property ID |
+|----------|---------------|-------------|
+| L&L Quiz Funnel | `G-KVF41T7117` | `529853510` |
+
+**GA4 events fired by the quiz:**
+
+| Event | Trigger | Parameters |
+|-------|---------|-----------|
+| `quiz_start` | Quiz begins (start button clicked) | `referrer` |
+| `quiz_step_view` | Every question viewed | `step_number`, `step_name`, `time_on_prev_step_sec` |
+| `quiz_funnel_step_[name]` | Each step — one named event per step | `step_number`, `step_name` |
+| `quiz_answer` | Every answer selection | `step_number`, `step_name`, `answer_label`, `answer_score` |
+| `quiz_result` | Result page shown | `result_type`, `total_time_sec` |
+| `quiz_lead_captured` | Form submitted | `result` + `generate_lead` with dollar value |
+| `quiz_abandon` | Tab closed/hidden mid-quiz | `last_step`, `last_step_name`, `answers_count`, `time_since_start_sec` |
+
+**Funnel step names (in order):**
+`quiz_start` → `industry_gate` → `crews` → `revenue` → `goal` → `website` → `ads` → `struggle` → `investment` → `lead_capture` → `quiz_lead_captured`
+
+**Meta Pixel:** `235509009483991` — fires PageView, ViewContent (result shown), Lead (form submit), InitiateCheckout (seed waitlist click, $697 value)
+
+### Analytics Dashboard
+
+**URL:** https://ll-quiz-analytics.vercel.app
+**Vercel Project:** `quiz-analytics` (`prj_KtLyzWGq5nWku9krUYnFiRLmQoPj`)
+**Stack:** Vanilla HTML/CSS/JS + Vercel Serverless Function (Node.js) → GA4 Data API
+
+**Dashboard shows:**
+- KPIs: quiz starts, completions, completion rate, leads captured, lead capture rate, avg time to complete
+- Drop-off funnel: step-by-step with % remaining and drop-off %
+- Result distribution: Authority / Growth / Seed / Not-a-Fit counts and %
+- Top exit points (steps with highest abandonment)
+- Sessions by day: starts, completions, lead captured, traffic source
+
+**Date ranges:** 7 days / 14 days / 30 days / 90 days / All time (from launch date Mar 24, 2026)
+**Auto-refresh:** every 5 minutes
+
+**Authentication:**
+- Google Cloud Project: `quiz-which-program`
+- Service Account: `ll-quiz-analytics@quiz-which-program.iam.gserviceaccount.com`
+- GA4 role: Viewer on property `529853510`
+- Vercel env vars: `GA4_PROPERTY_ID` + `GOOGLE_SA_KEY` (encrypted)
+
+### ⚠️ Pending: Register Custom Dimensions in GA4
+
+The `result_type` parameter (authority/growth/seed/notfit) is being passed with `quiz_result` events but **cannot be queried via the Data API until it's registered as a custom dimension in GA4.**
+
+**To enable full result breakdown in the analytics dashboard:**
+1. Go to **analytics.google.com → Admin → Custom definitions → Custom dimensions**
+2. Click **Create custom dimensions**
+3. Dimension name: `result_type`
+4. Scope: **Event**
+5. Event parameter: `result_type`
+6. Click **Save**
+
+Once registered, wait 24–48h for data to populate, then update `/api/ga4.js` in the `getResults()` function to use `{ name: 'customEvent:result_type' }` as a dimension in the `quiz_result` report. This will unlock the Authority/Growth/Seed/Not-a-Fit breakdown chart in the dashboard.
 
 ---
 
@@ -81,16 +145,6 @@ Not-a-fit paths skip the lead capture form entirely.
 | Floor | Q8: Investment | "Can't commit" = Not a Fit (invest variant). Otherwise does not change tier. |
 | Context | Q4–Q7 | Shape result page copy + personalization only. Do NOT affect routing. |
 
-### Edge Case Routing
-
-| Scenario | Signals | Routes To | Rationale |
-|----------|---------|-----------|-----------|
-| Big company, small budget | 5 crews, $1.2M rev, low budget | **Authority** | Revenue wins. Budget is a sales conversation. |
-| Small crew, high budget | 2 crews, $400K rev, high budget | **Growth** | Revenue wins. High budget doesn't upgrade tier. Result notes graduation path. |
-| Solo op, high revenue | 1 crew, $800K rev | **Authority** | Revenue wins. Capacity note in personalization. |
-| 3+ crews under $750K | 3 crews, $500K rev | **Growth** | Revenue under $750K. Crews don't override. |
-| High revenue, never ran ads | $1M+ rev, no ad exp | **Authority** | Revenue wins. Personalized copy: accelerator framing, not gamble. |
-
 ### Scoring Code
 
 ```js
@@ -104,12 +158,6 @@ function computeResult() {
     if (rev === 'authority') return computeWithRevenue('authority');
   }
   return majorityVote();
-}
-function computeWithRevenue(revTier) {
-  const crews = answers[2]?.score;
-  if (revTier === 'authority' && crews === 'seed') return 'authority'; // solo + high rev
-  if (revTier === 'growth' && crews === 'authority') return 'growth';  // 3+ crews + <$750K
-  return revTier;
 }
 ```
 
@@ -130,7 +178,7 @@ function computeWithRevenue(revTier) {
 
 ---
 
-## Lead Capture + N8N Webhook (Sprint 1 ✅)
+## Lead Capture + N8N Webhook
 
 **Capture form** shown after Q8 for Authority / Growth / Seed only (not-a-fit skips it).
 Fields: First Name, Last Name, Email, Phone, Company Name
@@ -143,7 +191,7 @@ Fields: First Name, Last Name, Email, Phone, Company Name
 {
   "firstName": "", "lastName": "", "email": "", "phone": "", "company": "",
   "result": "authority | growth | seed | notfit-early | notfit-invest | notfit-industry",
-  "answers": { "q1_industry": "", "q2_crews": "", "q3_revenue": "", ... },
+  "answers": { "q1_industry": "", "q2_crews": "", "q3_revenue": "", "..." },
   "signals": { "revenueScore": "", "crewScore": "", "investScore": "", "goalMeta": "", "struggleMeta": "", "adsMeta": "" },
   "source": "ll-quiz-funnel",
   "submittedAt": "ISO timestamp",
@@ -152,109 +200,78 @@ Fields: First Name, Last Name, Email, Phone, Company Name
 ```
 
 **SAE Routing:**
-- `quiz-authority` → Authority sequence
-- `quiz-growth` → Growth sequence
-- `quiz-seed` → Seed sequence
+- `quiz-authority` → Authority follow-up sequence (6 steps / 7 days)
+- `quiz-growth` → Growth follow-up sequence (6 steps / 7 days)
+- `quiz-seed` → Seed follow-up sequence (4 steps / 5 days)
 - SAE Location: 🌿 Lawn & Land Marketing (`x5MOOAaH49HyBUXG1NNt`)
-- Credential in N8N: `GHL L&L Sub-Account API` (`IlCZXnqnjF9Y9IPu`)
 
-**⚠️ Still needed:** SAE follow-up sequences (one per program) triggered by these tags.
-
----
-
-## Follow-Up Sequences (Built — SAE Implementation Pending)
-
-Full sequences emailed to matt@lawnandlandmarketing.com on March 21, 2026.
-
-| Program | Touchpoints | Goal | Core Angle |
-|---------|-------------|------|------------|
-| Authority | 6 (3 SMS + 3 email) over 7 days | Strategy call booked | Omnipresence, 7→8 figures, last program you'll ever need |
-| Growth | 6 (3 SMS + 3 email) over 7 days | Apply or book call | Foundation first, predictable leads, clear graduation path |
-| Seed | 4 (2 SMS + 2 email) over 5 days | Waitlist signup | Quality-controlled onboarding, full info sent on join |
+**9 SAE Custom Fields (all set on contact upsert):**
+`quiz_result`, `quiz_revenue_tier`, `quiz_crew_count`, `quiz_investment_tier`, `quiz_growth_goal`, `quiz_biggest_struggle`, `quiz_ads_experience`, `quiz_website_situation`, `quiz_submitted_at`
 
 ---
 
-## Sprint Roadmap
+## Meta Ads Campaign
 
-### ✅ Sprint 1 — Lead Capture + N8N Webhook
-- Form captures all lead data before revealing results
-- N8N workflow live, routes to SAE by program tag
-- ⚠️ **Pending:** SAE follow-up sequences (Authority / Growth / Seed)
+**Campaign:** Quiz Funnel - Website Leads - Mar 2026 (ID: `120241640444540175`) — **PAUSED, ready to launch**
+**Ad Set:** Quiz Funnel - Broad - Website (ID: `120241640446140175`)
+- US, 18–65, broad, $350/day, OFFSITE_CONVERSIONS, pixel Lead event
+- Destination: https://ll-quiz-funnel.vercel.app
 
-### ✅ Sprint 2 — Revenue-First Routing
-- Revenue-first hierarchy replaces equal-weight majority vote
-- Q1 industry gate (immediate wrong-industry exit)
-- All 5 edge cases wired
-- 3 distinct Not-a-Fit result pages
-- Personalization callouts on Authority + Growth
+**5 Quiz Ads (all PAUSED):**
+| Ad | Hook |
+|----|------|
+| QZ#01 — Which Program Actually Fits? | Template vs. fit |
+| QZ#02 — Stop Guessing, Start Knowing | SEO vs. ads confusion |
+| QZ#03 — The Race to the Bottom | Angi/shared leads pain |
+| QZ#04 — AI Won't Tell You This | AI tool vs. strategy |
+| QZ#05 — 2 Minutes to Clarity | 97% retention proof |
 
-### ⏳ Sprint 3 — Conversion Optimization
-- Per-question drop-off tracking (analytics)
-- Breather/social proof slide after Q4
-- Urgency element before capture form
+To launch: **unpause the campaign.** Existing lead form campaign stays untouched (different objective — `QUALITY_LEAD` on-Facebook vs. `OFFSITE_CONVERSIONS` website).
 
-### ⏳ Sprint 4 — Meta Retargeting (requires Sprint 1 SAE tags first)
-- Meta Custom Audiences segmented by Q4 (goal) + Q7 (struggle) from SAE tags
-- "Didn't finish quiz" retargeting audience
+---
+
+## Sprint Status
+
+| Sprint | Status | Description |
+|--------|--------|-------------|
+| Sprint 1 | ✅ Complete | Lead capture + N8N webhook + SAE follow-up sequences |
+| Sprint 2 | ✅ Complete | Revenue-first routing, all result pages, edge cases |
+| Sprint 3 | ✅ Complete | Drop-off tracking (N8N), Meta Pixel, seed waitlist pre-fill |
+| Sprint 4 | ⏳ Pending | Meta retargeting audiences from SAE quiz tags |
+
+### Sprint 4 — Meta Retargeting
+Create Meta Custom Audiences from SAE tags:
+- `quiz-authority` → Authority retargeting
+- `quiz-growth` → Growth retargeting
+- `quiz-seed` → Seed retargeting
+- Segment further by `quiz_biggest_struggle` and `quiz_growth_goal` custom fields
 
 ---
 
 ## Open Items
 
-- [ ] Build SAE follow-up sequences (Authority / Growth / Seed) triggered by quiz tags
-- [ ] Real CTA URLs — apply page, seed waitlist page at lawnandlandmarketing.com/seed-waitlist
-- [ ] Real client testimonials for loading screen (currently placeholder: Chris M., Olson Outdoors)
-- [ ] Seed: GBP automated posting tech stack (N8N/GHL feasibility)
-- [ ] Seed: community format — Facebook group vs. SAE channel
-- [ ] Seed: monthly AI performance snapshot email (V2 consideration)
+| Item | Priority | Owner |
+|------|----------|-------|
+| Register `result_type` custom dimension in GA4 | High | Matt (2 min task — see Analytics section above) |
+| Launch quiz Meta campaign | When ready | Matt (unpause campaign ID `120241640444540175`) |
+| Sprint 4: Meta retargeting audiences from SAE tags | Medium | Kai |
+| CAPI (Conversion API) server-side backup for pixel | Medium | Kai |
+| Real CTA URLs — apply page, seed waitlist page | Low | Matt |
+| Seed: GBP automated posting tech stack | Low | Kai |
+| Seed: community format decision | Low | Matt |
 
 ---
 
-## Result Pages — Content Summary
+## Deployment
 
-### Authority
-- **Badge:** ⚡ Your Match
-- **Heading:** You're Ready for the Authority Program
-- **Tagline:** "The last marketing program you'll ever need — built to take established landscape companies from 7 to 8 figures through total market omnipresence."
-- **Includes label:** The complete system
-- **Next Step:** Discovery call → deeper dive if fit
-- **CTA:** Book a Free Strategy Call → lawnandlandmarketing.com/grow
-- **Footer:** 🌴 Green Industry Experts · ⭐️ 98% Client Retention · 📈 Your Dedicated Growth Partner
-
-### Growth
-- **Badge:** 🚀 Your Match
-- **Heading:** You're Ready for the Growth Program
-- **Tagline:** Foundation-first, predictable leads, clear upgrade path to Authority at $750K.
-- **Next Step:** Discovery call → deeper dive if fit
-- **CTA:** Book a Free Strategy Call → lawnandlandmarketing.com/grow
-- **Footer:** 🌴 Green Industry Experts · ⭐️ 98% Client Retention · 📈 Your Dedicated Growth Partner
-
-### Seed
-- **Badge:** 🌱 Your Match
-- **Heading:** Start Strong with the Seed Program
-- **Tagline:** Digital foundation for operators building toward consistent leads.
-- **Next Step:** Waitlist = quality-controlled onboarding, full info sent on join, hit the ground running on day one.
-- **CTA:** Join the Seed Waitlist → lawnandlandmarketing.com/seed-waitlist
-- **Footer:** 🌴 Green Industry Experts · ⭐️ 98% Client Retention · 📈 Your Dedicated Growth Partner
-
-### Not a Fit — Too Early (under $100K)
-- **Badge:** 💡 Honest Take
-- **Heading:** Let's Set You Up for Success First
-- **3 free moves:** GBP optimization, 10 Google reviews, LSA application
-- **CTA:** Get the Free GBP Checklist → lawnandlandmarketing.com/checklist-download/
-
-### Not a Fit — Won't Invest (has revenue, won't commit)
-- **Badge:** 💡 Honest Take
-- **Heading:** The Business Is Ready. The Timing Might Not Be.
-- **Tips:** Referral system, GBP, know your numbers
-- **CTA:** Book a Free Strategy Call → lawnandlandmarketing.com/grow
-- **Sub-note:** "Curious about our programs? We'd love to hear about your business — no pitch, just a conversation."
-
-### Not a Fit — Wrong Industry
-- **Badge:** Not a Match
-- **Heading:** We Exclusively Serve the Green Industry
-- **CTA:** Learn More About What We Do → lawnandlandmarketing.com
-- **Ghost link:** ← Go back (made a mistake?)
+```bash
+# Deploy index.html to ll-quiz-funnel Vercel project
+VTOKEN="your_vercel_token"
+curl -X POST "https://api.vercel.com/v13/deployments?teamId=team_sPQaPdEOVQaR42djHV2cTm51" \
+  -H "Authorization: Bearer $VTOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"name\":\"ll-quiz-funnel\",\"target\":\"production\",\"files\":[{\"file\":\"index.html\",\"data\":$(python3 -c "import json; print(json.dumps(open('index.html').read()))")}],\"projectSettings\":{\"framework\":null}}"
+```
 
 ---
 
@@ -268,21 +285,7 @@ L&L Digital UI Standard:
 
 ---
 
-## Deployment
-
-```bash
-VERCEL_TOKEN="your_token"
-TEAM_ID="team_sPQaPdEOVQaR42djHV2cTm51"
-HTML_B64=$(base64 -i index.html | tr -d '\n')
-curl -X POST "https://api.vercel.com/v13/deployments?teamId=${TEAM_ID}" \
-  -H "Authorization: Bearer ${VERCEL_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d "{\"name\":\"ll-quiz-funnel\",\"target\":\"production\",\"files\":[{\"file\":\"index.html\",\"data\":\"${HTML_B64}\",\"encoding\":\"base64\"}],\"projectSettings\":{\"framework\":null}}"
-```
-
----
-
-## Context for Claude (when building out)
+## Context for Future Builders
 
 **What Lawn & Land Marketing does:**
 Digital marketing agency exclusively for lawn & landscape companies ($750K–$9M revenue). ~54 clients, ~$88K MRR, 98% retention, $3M+ ad spend managed (95% Meta). Green industry only.
