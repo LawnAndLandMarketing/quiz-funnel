@@ -8,6 +8,26 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400;0,700;1,700;1,800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
+  <!-- Google Analytics 4 — L&L Quiz Funnel (G-3JS2F4MCKF) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3JS2F4MCKF"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-3JS2F4MCKF', {
+      send_page_view: true,
+      cookie_flags: 'SameSite=None;Secure'
+    });
+
+    // ─── GA4 Quiz Event Helper ──────────────────────────────────────────────────
+    // Called throughout quiz logic to fire structured GA4 events.
+    // All events use 'quiz_' prefix for easy filtering in GA4 Explore.
+    function ga4Track(eventName, params) {
+      if (typeof gtag !== 'function') return;
+      gtag('event', eventName, params || {});
+    }
+  </script>
+
   <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -1070,7 +1090,92 @@
         source: 'll-quiz-funnel',
         ...data
       };
-      // Send to N8N (non-blocking, best-effort)
+
+      // ── GA4 event routing ──────────────────────────────────────────────────
+      // Map internal quiz events → GA4 events with clean parameter names
+      try {
+        switch (event) {
+          case 'quiz_started':
+            ga4Track('quiz_start', {
+              quiz_name: 'L&L Growth Path Quiz',
+              referrer: data.referrer || ''
+            });
+            break;
+
+          case 'step_view':
+            ga4Track('quiz_step_view', {
+              step_number: data.step,
+              step_name: data.step_name,
+              time_on_prev_step_sec: data.time_on_prev_step_sec
+            });
+            // GA4 funnel steps — fire as individual named events for Funnel Exploration
+            ga4Track('quiz_funnel_step_' + (data.step_name || data.step), {
+              step_number: data.step,
+              step_name: data.step_name
+            });
+            break;
+
+          case 'option_selected':
+            ga4Track('quiz_answer', {
+              step_number: data.step,
+              step_name: data.step_name,
+              answer_label: data.label,
+              answer_score: data.score
+            });
+            break;
+
+          case 'lead_captured':
+            ga4Track('quiz_lead_captured', {
+              result: data.result,
+              quiz_name: 'L&L Growth Path Quiz'
+            });
+            ga4Track('generate_lead', {
+              currency: 'USD',
+              value: data.result === 'authority' ? 2400 : data.result === 'growth' ? 1200 : data.result === 'seed' ? 697 : 0,
+              result_type: data.result
+            });
+            break;
+
+          case 'result_shown':
+            ga4Track('quiz_result', {
+              result_type: data.result,
+              quiz_name: 'L&L Growth Path Quiz',
+              total_time_sec: data.total_time_sec
+            });
+            break;
+
+          case 'quiz_abandoned':
+            ga4Track('quiz_abandon', {
+              last_step: data.last_step,
+              last_step_name: data.last_step_name,
+              answers_count: data.answers_count,
+              time_since_start_sec: data.time_since_start_sec
+            });
+            break;
+
+          case 'cta_clicked':
+            ga4Track('quiz_cta_click', {
+              cta_label: data.label,
+              result_type: data.result,
+              cta_url: data.url
+            });
+            break;
+
+          case 'seed_waitlist_click':
+            ga4Track('quiz_seed_waitlist', {
+              result_type: 'seed'
+            });
+            break;
+
+          default:
+            // Fire all other events as-is with quiz_ prefix
+            ga4Track('quiz_' + event, data || {});
+        }
+      } catch (gaErr) {
+        // Never let GA4 errors break the quiz
+      }
+
+      // ── N8N tracking (non-blocking, best-effort) ───────────────────────────
       if (N8N_WEBHOOK_URL) {
         const trackUrl = N8N_WEBHOOK_URL.replace('/ll-quiz-lead-capture', '/ll-quiz-tracking');
         try {
@@ -1193,13 +1298,22 @@
       btn.closest('.options-grid').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       const labelEl = btn.querySelector('.option-label');
+      const answerLabel = labelEl ? labelEl.textContent.trim() : '';
       answers[stepNum] = {
         score: score,
-        label: labelEl ? labelEl.textContent.trim() : '',
+        label: answerLabel,
         meta: meta || null
       };
       const nextBtn = document.getElementById('next-' + stepNum);
       if (nextBtn) nextBtn.disabled = false;
+
+      // GA4: track answer selection
+      trackEvent('option_selected', {
+        step: stepNum,
+        step_name: getStepName(stepNum),
+        score: score,
+        label: answerLabel
+      });
     }
 
     function handleQ1Next() {
@@ -1410,7 +1524,10 @@
         void card.offsetWidth;
         card.classList.add('fade-in');
       }
-      trackEvent('result_shown', { result: resultId });
+      trackEvent('result_shown', {
+        result: resultId,
+        total_time_sec: quizStartedAt ? Math.round((Date.now() - quizStartedAt) / 1000) : null
+      });
 
       // Meta Pixel — ViewContent on result page shown
       if (typeof fbq !== 'undefined') {
